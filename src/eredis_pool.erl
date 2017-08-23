@@ -113,21 +113,20 @@ q(PoolName, Command) ->
                {ok, binary() | [binary()]} | {error, Reason::binary()}.
 
 q(PoolName, Command, Timeout) ->
-q(PoolName, Command, Timeout) ->
     Worker = poolboy:checkout(PoolName, true, Timeout),
     try
         Ret = eredis:q(Worker, Command, Timeout),
         case Ret of
-            %% if connection closed, it's a dangling eredis node.
-            %% send {'EXIT', From, return_closed_from_gen_tcp} signal to poolboy.
-            %% Poolboy will catch the signal and recreate one.
-            %% No need to checkin if process is restarted.
+            %% Sometimes gen_tcp returns 'closed', eredis_client worker process stays.
+            %% Restart the worker process in this case.
             {error, closed} -> exit(Worker, return_closed_from_gen_tcp);
             _ -> poolboy:checkin(PoolName, Worker)
         end,
         Ret
     catch
-      _:Exception -> poolboy:checkin(PoolName, Worker), throw(Exception)
+      Class:Reason ->
+        is_process_alive(Worker) andalso poolboy:checkin(PoolName, Worker),
+        erlang:raise(Class, Reason, erlang:get_stacktrace())
     end.
 
 -spec qp(PoolName::atom(), Command::iolist(), Timeout::integer()) ->
