@@ -17,7 +17,7 @@
 
 %% API
 -export([start/0, stop/0]).
--export([q/2, q/3, qp/2, qp/3, transaction/2,
+-export([q/2, q/3, q/5, qp/2, qp/3, transaction/2,
          create_pool/2, create_pool/3, create_pool/4, create_pool/5,
          create_pool/6, create_pool/7, 
          delete_pool/1]).
@@ -113,20 +113,31 @@ q(PoolName, Command) ->
                {ok, binary() | [binary()]} | {error, Reason::binary()}.
 
 q(PoolName, Command, Timeout) ->
-    Worker = poolboy:checkout(PoolName, true, Timeout),
-    try
-        Ret = eredis:q(Worker, Command, Timeout),
-        case Ret of
-            %% Sometimes gen_tcp returns 'closed', eredis_client worker process stays.
-            %% Restart the worker process in this case.
-            {error, closed} -> exit(Worker, return_closed_from_gen_tcp);
-            _ -> poolboy:checkin(PoolName, Worker)
-        end,
-        Ret
-    catch
-      Class:Reason ->
-        is_process_alive(Worker) andalso poolboy:checkin(PoolName, Worker),
-        erlang:raise(Class, Reason, erlang:get_stacktrace())
+  q(PoolName, Command, Timeout, Timeout, true).
+
+
+-spec q(PoolName::atom(), Command::iolist(), PoolTimeout::integer(),
+       EredisTimeout::integer(), Block::boolean()) ->
+               {ok, binary() | [binary()]} | {error, Reason::binary()}.
+
+q(PoolName, Command, PoolTimeout, EredisTimeout, Block) ->
+    case poolboy:checkout(PoolName, Block, PoolTimeout) of
+      full -> {error, pool_full};
+      Worker ->
+        try
+            Ret = eredis:q(Worker, Command, EredisTimeout),
+            case Ret of
+                %% Sometimes gen_tcp returns 'closed', eredis_client worker process stays.
+                %% Restart the worker process in this case.
+                {error, closed} -> exit(Worker, return_closed_from_gen_tcp);
+                _ -> poolboy:checkin(PoolName, Worker)
+            end,
+            Ret
+        catch
+          Class:Reason ->
+            is_process_alive(Worker) andalso poolboy:checkin(PoolName, Worker),
+            erlang:raise(Class, Reason, erlang:get_stacktrace())
+        end
     end.
 
 -spec qp(PoolName::atom(), Command::iolist(), Timeout::integer()) ->
