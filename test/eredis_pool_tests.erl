@@ -130,8 +130,12 @@ basic_test_() ->
 
        { "new pool create and delete",
          fun() ->
+                 {ok,[{dbsrv,[{size,10},{max_overflow,30}],
+                             [{host,Host},{port,Port}]}]}
+                   = application:get_env(eredis_pool, pools),
+
                  ?assertMatch({ok, _},
-                              eredis_pool:create_pool(pool1, 10)),
+                              eredis_pool:create_pool(pool1, 10, Host, Port)),
 
                  ?assertMatch({ok, _}, eredis_pool:q(pool1, ["DEL", foo1])),
 
