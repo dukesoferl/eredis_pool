@@ -4,7 +4,15 @@
 
 -import(eredis, [create_multibulk/1]).
 
--define(Setup, fun() -> application:start(eredis_pool)  end).
+-define(Setup, fun() ->
+                   case application:load (eredis_pool) of
+                     ok ->
+                       ok = application:set_env (eredis_pool, global_or_local, local),
+                       ok = application:set_env (eredis_pool, pools, [{dbsrv, [{size, 10},{max_overflow, 30}],[{host, "127.0.0.1"},{port, 6379}]}]);
+                     _ -> ok
+                   end,
+                   application:start(eredis_pool)
+               end).
 -define(Clearnup, fun(_) -> application:stop(eredis_pool)  end).
 -define(DEFAULT, dbsrv).
 
@@ -137,16 +145,16 @@ basic_test_() ->
                  ?assertMatch({ok, _},
                               eredis_pool:create_pool(pool1, 10, Host, Port)),
 
-                 ?assertMatch({ok, _}, eredis_pool:q(pool1, ["DEL", foo1])),
+                 ?assertMatch({ok, _}, eredis_pool:q(pool1, ["DEL", foo3])),
 
                  ?assertEqual({ok, undefined},
-                              eredis_pool:q(pool1, ["GET", foo1])),
+                              eredis_pool:q(pool1, ["GET", foo3])),
 
                  ?assertEqual({ok, <<"OK">>},
-                              eredis_pool:q(pool1, ["SET", foo1, bar])),
+                              eredis_pool:q(pool1, ["SET", foo3, bar])),
 
                  ?assertEqual({ok, <<"bar">>},
-                              eredis_pool:q(pool1, ["GET", foo1])),
+                              eredis_pool:q(pool1, ["GET", foo3])),
 
                  ?assertEqual(ok, eredis_pool:delete_pool(pool1))
          end

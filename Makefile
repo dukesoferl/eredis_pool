@@ -1,30 +1,17 @@
-ERL=erl
-BEAMDIR=./deps/*/ebin ./ebin
-REBAR=./rebar
+REBAR3=rebar3
 
-all: clean get-deps update-deps compile xref
-
-update-deps:
-	@$(REBAR) update-deps
-
-get-deps:
-	@$(REBAR) get-deps
+all: clean compile
 
 compile:
-	@$(REBAR) compile
+	@$(REBAR3) compile
 
-xref:
-	@$(REBAR) xref skip_deps=true
+clean:
+	@$(REBAR3) clean
 
-clean: 
-	@ $(REBAR) clean
+maintainer-clean: clean
+	rm -rf _build
 
-eunit:
-	@rm -rf .eunit
-	@mkdir -p .eunit
-	@ERL_FLAGS="-config test.config" $(REBAR) skip_deps=true eunit 
+test:
+	@$(REBAR3) as test eunit,cover
 
-test: eunit
-
-edoc:
-	@$(REBAR) skip_deps=true doc
+.PHONY: all test clean maintainer-clean
