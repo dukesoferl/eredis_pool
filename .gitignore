@@ -1,6 +1,7 @@
 *.beam
 ebin
 .eunit
+.rebar3
 *~
 erl_crash.dump
 db

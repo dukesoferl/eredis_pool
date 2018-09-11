@@ -104,13 +104,15 @@ delete_pool(PoolName) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec q(PoolName::atom(), Command::iolist()) ->
-               {ok, binary() | [binary()]} | {error, Reason::binary()}.
+               {ok, undefined | binary() | [binary()]}
+               | {error, pool_full | no_connection | binary()}.
 
 q(PoolName, Command) ->
     q(PoolName, Command, ?TIMEOUT).
 
 -spec q(PoolName::atom(), Command::iolist(), Timeout::integer()) ->
-               {ok, binary() | [binary()]} | {error, Reason::binary()}.
+               {ok, undefined | binary() | [binary()]}
+               | {error, pool_full | no_connection | binary()}.
 
 q(PoolName, Command, Timeout) ->
   q(PoolName, Command, Timeout, Timeout, true).
@@ -118,7 +120,8 @@ q(PoolName, Command, Timeout) ->
 
 -spec q(PoolName::atom(), Command::iolist(), PoolTimeout::integer(),
        EredisTimeout::integer(), Block::boolean()) ->
-               {ok, binary() | [binary()]} | {error, Reason::binary()}.
+               {ok, undefined | binary() | [binary()]}
+               | {error, pool_full | no_connection | binary()}.
 
 q(PoolName, Command, PoolTimeout, EredisTimeout, Block) ->
     case poolboy:checkout(PoolName, Block, PoolTimeout) of
@@ -141,7 +144,8 @@ q(PoolName, Command, PoolTimeout, EredisTimeout, Block) ->
     end.
 
 -spec qp(PoolName::atom(), Command::iolist(), Timeout::integer()) ->
-               {ok, binary() | [binary()]} | {error, Reason::binary()}.
+               {ok, undefined | binary() | [binary()]}
+               | {error, pool_full | no_connection | binary()}.
 
 qp(PoolName, Pipeline) ->
     qp(PoolName, Pipeline, ?TIMEOUT).
