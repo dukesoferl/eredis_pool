@@ -1,12 +1,10 @@
 {application, eredis_pool,
  [
-  {description, ""},
-  {vsn, "1.4"},
+  {description, "Pool of Redis connections"},
+  {vsn, "1.5.0"},
   {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
+  {applications, [ kernel, stdlib ]},
+  {included_applications, [eredis]},
   {mod, {eredis_pool_app, []}},
   {env, [{pools, []}, {global_or_local, local}]}
 ]}.
