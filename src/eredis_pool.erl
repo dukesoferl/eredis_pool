@@ -15,6 +15,14 @@
 %% Specified in http://www.erlang.org/doc/man/gen_server.html#call-3
 -define(TIMEOUT, 5000).
 
+-ifdef(OTP_RELEASE). %% this implies 21 or higher
+-define(EXCEPTION(Class, Reason, Stacktrace), Class:Reason:Stacktrace).
+-define(GET_STACK(Stacktrace), Stacktrace).
+-else.
+-define(EXCEPTION(Class, Reason, _), Class:Reason).
+-define(GET_STACK(_), erlang:get_stacktrace()).
+-endif.
+
 %% API
 -export([start/0, stop/0]).
 -export([q/2, q/3, q/5, qp/2, qp/3, transaction/2,
@@ -137,9 +145,9 @@ q(PoolName, Command, PoolTimeout, EredisTimeout, Block) ->
             end,
             Ret
         catch
-          Class:Reason ->
+          ?EXCEPTION(Class, Reason, Stacktrace) ->
             is_process_alive(Worker) andalso poolboy:checkin(PoolName, Worker),
-            erlang:raise(Class, Reason, erlang:get_stacktrace())
+            erlang:raise(Class, Reason, ?GET_STACK(Stacktrace))
         end
     end.
 
