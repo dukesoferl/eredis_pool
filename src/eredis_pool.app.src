@@ -1,7 +1,7 @@
 {application, eredis_pool,
  [
   {description, "Pool of Redis connections"},
-  {vsn, "1.5.3"},
+  {vsn, "1.5.4"},
   {registered, []},
   {applications, [ kernel, stdlib ]},
   {included_applications, [eredis,poolboy]},
